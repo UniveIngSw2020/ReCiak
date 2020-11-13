@@ -1,0 +1,6 @@
+<resources>
+    <integer name="port">10501</integer>
+    <integer name="width">1280</integer>
+    <integer name="height">720</integer>
+    <integer name="fps">30</integer>
+</resources>
