@@ -1,5 +1,4 @@
-package it.unive.reciak;
-
+package it.unive.reciak.utils;
 
 import androidx.annotation.NonNull;
 
@@ -8,7 +7,7 @@ import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.List;
 
-public class Util {
+public class NetUtils {
     // Restituisce l'indirizzo IP del dispositivo
     @NonNull
     public static String getIp() {

@@ -16,7 +16,6 @@ import org.webrtc.Camera1Enumerator;
 import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
-import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
@@ -50,13 +49,12 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import it.unive.reciak.utils.EglUtils;
 
 public class WebRTC {
     @NonNull
     private final ArrayList<Peer> peers;
 
-    @Nullable
-    private EglBase eglBase;
     @Nullable
     private SurfaceTextureHelper helper;
     @Nullable
@@ -126,11 +124,10 @@ public class WebRTC {
 
         // Cattura il flusso video della fotocamra
         localCapture = camera1Enumerator.createCapturer(cameraName, null);
-        eglBase = EglBase.create();
 
-        leftView.init(eglBase.getEglBaseContext(), null);
-        rightView.init(eglBase.getEglBaseContext(), null);
-        mainView.init(eglBase.getEglBaseContext(), null);
+        leftView.init(EglUtils.getEglBaseContext(), null);
+        rightView.init(EglUtils.getEglBaseContext(), null);
+        mainView.init(EglUtils.getEglBaseContext(), null);
 
         PeerConnectionFactory.InitializationOptions initializationOptions = PeerConnectionFactory.InitializationOptions
                 .builder(context)
@@ -138,8 +135,8 @@ public class WebRTC {
         PeerConnectionFactory.initialize(initializationOptions);
 
         peerConnectionFactory = PeerConnectionFactory.builder()
-                .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBase.getEglBaseContext()))
-                .setVideoEncoderFactory(new DefaultVideoEncoderFactory(eglBase.getEglBaseContext(), true, true))
+                .setVideoDecoderFactory(new DefaultVideoDecoderFactory(EglUtils.getEglBaseContext()))
+                .setVideoEncoderFactory(new DefaultVideoEncoderFactory(EglUtils.getEglBaseContext(), true, true))
                 .setOptions(new PeerConnectionFactory.Options())
                 .createPeerConnectionFactory();
 
@@ -151,7 +148,7 @@ public class WebRTC {
         rtcConfig = new PeerConnection.RTCConfiguration(new ArrayList<>());
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
 
-        helper = SurfaceTextureHelper.create("CaptureThread", eglBase.getEglBaseContext());
+        helper = SurfaceTextureHelper.create("CaptureThread", EglUtils.getEglBaseContext());
         videoSource = peerConnectionFactory.createVideoSource(localCapture.isScreencast());
         localCapture.initialize(helper, context, videoSource.getCapturerObserver());
         localCapture.startCapture(context.getResources().getInteger(R.integer.width), context.getResources().getInteger(R.integer.height), context.getResources().getInteger(R.integer.fps));
@@ -164,7 +161,6 @@ public class WebRTC {
     // Crea i peer con le informazioni indicate precedentemente
     public void addPeers(ArrayList<PeerInfo> peersInfo) {
         for (PeerInfo peerInfo : peersInfo) {
-            boolean isInitiator = peerInfo.isInitiator();
             SurfaceViewRenderer peerView;
             Peer peer;
 
@@ -175,11 +171,11 @@ public class WebRTC {
                 peerView = leftView;
 
             // Crea un peer con le informazioni di peerInfo
-            peer = new Peer(peerInfo.getIp(), peerInfo.getPort(), peerInfo.getInitiatorPort(), peerView, isInitiator);
+            peer = new Peer(peerInfo, peerView);
             // Avvia il gestore della comunicazione tra due peer
             peer.startSignaling();
             // Se devo iniziare la comunicazione
-            if (isInitiator) {
+            if (peerInfo.isInitiator()) {
                 // Avvia il peer
                 peer.start();
                 peer.createOffer();
@@ -250,14 +246,11 @@ public class WebRTC {
             peerConnectionFactory = null;
         }
 
+        EglUtils.release();
+
         mainView.release();
         leftView.release();
         rightView.release();
-
-        if (eglBase != null) {
-            eglBase.release();
-            eglBase = null;
-        }
 
         PeerConnectionFactory.stopInternalTracingCapture();
         PeerConnectionFactory.shutdownInternalTracer();
@@ -265,12 +258,9 @@ public class WebRTC {
 
     private class Peer implements SdpObserver, PeerConnection.Observer {
         @NonNull
-        private final String partnerIp;
-        private final int partnerPort;
-        private final int port;
+        private final PeerInfo peerInfo;
         @NonNull
         private final SurfaceViewRenderer peerView;
-        private final boolean isInitiator;
 
         @Nullable
         private CompositeDisposable disposables;
@@ -282,12 +272,9 @@ public class WebRTC {
         @Nullable
         private RtpSender audioSender;
 
-        public Peer(@NonNull String partnerIp, int partnerPort, int port, @NonNull SurfaceViewRenderer peerView, boolean isInitiator) {
-            this.partnerIp = partnerIp;
-            this.partnerPort = partnerPort;
-            this.port = port;
+        public Peer(@NonNull PeerInfo peerInfo, @NonNull SurfaceViewRenderer peerView) {
+            this.peerInfo = peerInfo;
             this.peerView = peerView;
-            this.isInitiator = isInitiator;
             disposables = new CompositeDisposable();
         }
 
@@ -340,14 +327,12 @@ public class WebRTC {
                         peer.sendChangeUser();
 
                     audioTrack.setEnabled(true);
-
-
                 });
 
                 mainView.setClickable(false);
             }
 
-            if (!isInitiator && isFirst()) {
+            if (!peerInfo.isInitiator() && isFirst()) {
                 if (viewsManager != null)
                     viewsManager.swapViews(peerView);
                 mainView.setClickable(true);
@@ -379,7 +364,7 @@ public class WebRTC {
 
         // Verifica se il peer è stato il primo ad essere stato creato
         private boolean isFirst() {
-            return port == context.getResources().getInteger(R.integer.port);
+            return peerInfo.getInitiatorPort() == context.getResources().getInteger(R.integer.port);
         }
 
         private void createOffer() {
@@ -390,7 +375,7 @@ public class WebRTC {
         private void setRemoteDescription(String description) {
             if (peerConnection != null) {
                 SessionDescription.Type type;
-                if (isInitiator)
+                if (peerInfo.isInitiator())
                     type = SessionDescription.Type.ANSWER;
                 else
                     type = SessionDescription.Type.OFFER;
@@ -499,7 +484,7 @@ public class WebRTC {
                 try (ServerSocket serverSocket = new ServerSocket()) {
                     serverSocket.setSoTimeout(3 * 1000);
                     serverSocket.setReuseAddress(true);
-                    serverSocket.bind(new InetSocketAddress(port));
+                    serverSocket.bind(new InetSocketAddress(peerInfo.getInitiatorPort()));
 
                     // Finché il peer non viene eliminato
                     while (!emitter.isDisposed()) {
@@ -534,16 +519,16 @@ public class WebRTC {
                 // Risponde in base al tipo di pacchetto ricevuto
                 switch (action) {
                     case "setSessionDescription":
-                        if (!isInitiator)
+                        if (!peerInfo.isInitiator())
                             start();
                         String value = packet.getString("value");
                         setRemoteDescription(value);
 
-                        if (!isFirst() && peers.get(0).isInitiator) {
+                        if (!isFirst() && peers.get(0).peerInfo.isInitiator()) {
                             for (Peer peer : peers) {
                                 if (peer != this) {
-                                    peer.sendAddUser(partnerIp, partnerPort + peers.size() - 1, true);
-                                    sendAddUser(peer.partnerIp, peer.partnerPort + peers.size() - 1, false);
+                                    peer.sendAddUser(peerInfo.getIp(), peerInfo.getInitiatorPort() + peers.size() - 1, true);
+                                    sendAddUser(peer.peerInfo.getIp(), peer.peerInfo.getPort() + peers.size() - 1, false);
                                 }
                             }
                         }
@@ -577,9 +562,9 @@ public class WebRTC {
                         boolean newIsInitiator = userJson.getBoolean("isInitiator");
 
                         // Crea un nuovo peer
-                        ArrayList<PeerInfo> peerInfo = new ArrayList<>();
-                        peerInfo.add(new PeerInfo(newPartnerIp, newPartnerPort, newIsInitiator, port + peers.size()));
-                        addPeers(peerInfo);
+                        ArrayList<PeerInfo> newPeerInfo = new ArrayList<>();
+                        newPeerInfo.add(new PeerInfo(newPartnerIp, newPartnerPort, newIsInitiator, peerInfo.getInitiatorPort() + peers.size()));
+                        addPeers(newPeerInfo);
                         break;
                     case "closeRoom":
                         // TODO: Termina registrazione e chiude la stanza
@@ -640,7 +625,7 @@ public class WebRTC {
                     socket.setSoTimeout(10 * 1000);
 
                     // Si connette al peer
-                    socket.connect(new InetSocketAddress(partnerIp, partnerPort), 10 * 1000);
+                    socket.connect(new InetSocketAddress(peerInfo.getIp(), peerInfo.getPort()), 10 * 1000);
                     // Invia il pacchetto
                     socket.getOutputStream().write(packet.toString().getBytes(StandardCharsets.UTF_8));
                 }

@@ -17,6 +17,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import it.unive.reciak.utils.NetUtils;
+
 public class ConnectActivity extends AppCompatActivity {
     private final String[] PERMISSIONS = {Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     // L'utente vuole creare un stanza
@@ -49,7 +51,7 @@ public class ConnectActivity extends AppCompatActivity {
         peersInfo.addAll(peer.getParcelableArrayListExtra("peersInfo"));
 
         // Mostra l'indirizzo all'utente
-        textIp.setText(String.format(getString(R.string.your_ip), Util.getIp(), getResources().getInteger(R.integer.port) + peersInfo.size()));
+        textIp.setText(String.format(getString(R.string.your_ip), NetUtils.getIp(), getResources().getInteger(R.integer.port) + peersInfo.size()));
         // Modifica i testi dei widget in base al tipo di accesso alla stanza (crea o entra)
         if (!isServer) {
             editIp.setHint(R.string.ask_server_ip);
