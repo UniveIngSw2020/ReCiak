@@ -1,6 +1,8 @@
 <resources>
-    <integer name="port">10501</integer>
+    <integer name="direct_port">10550</integer>
+    <integer name="port">10551</integer>
     <integer name="width">1280</integer>
     <integer name="height">720</integer>
     <integer name="fps">30</integer>
+    <integer name="max_users">3</integer>
 </resources>

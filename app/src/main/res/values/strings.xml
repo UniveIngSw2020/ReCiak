@@ -1,14 +1,11 @@
 <resources>
     <string name="app_name">ReCiak!</string>
+    <string name="credits">ADT @ Ca\' Foscari</string>
     <string name="server_button">CREA</string>
     <string name="client_button">ENTRA</string>
-    <string name="add_button">AGGIUNGI</string>
     <string name="start_button">INIZIA</string>
 
-    <string name="server_title">Crea</string>
-    <string name="client_title">Entra</string>
-    <string name="ask_client_ip">Indirizzo del client</string>
-    <string name="ask_server_ip">Indirizzo del server</string>
-    <string name="your_ip">Il tuo IP è %s:%d</string>
-    <string name="ip_error">Inserisci l\'indirizzo (IP:Porta)</string>
+    <string name="server_description">Attendo i dispositivi…</string>
+    <string name="client_description">Cerco i dispositivi…</string>
+    <string name="connected">Connesso. Attendi…</string>
 </resources>

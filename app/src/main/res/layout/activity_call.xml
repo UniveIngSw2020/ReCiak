@@ -25,13 +25,16 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <org.webrtc.SurfaceViewRenderer
-        android:id="@+id/leftView"
-        android:layout_width="100dp"
-        android:layout_height="178dp"
-        android:layout_marginStart="16dp"
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="65dp"
+        android:layout_height="65dp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:contentDescription="TODO"
+        app:layout_constraintBottom_toBottomOf="@+id/mainView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/ic_circle" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
