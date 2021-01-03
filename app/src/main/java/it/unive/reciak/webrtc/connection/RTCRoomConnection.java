@@ -111,7 +111,7 @@ public class RTCRoomConnection {
     private final ArrayList<String> videos;
     // Cartella contenente le registrazioni
     @NonNull
-    final String folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/ReCiak!/Room_" + System.currentTimeMillis() + "/";
+    private final String folder;
 
     // Sta condividendo la fotocamera
     private boolean sharing;
@@ -128,6 +128,7 @@ public class RTCRoomConnection {
         btnRecord = activity.findViewById(R.id.imageView);
         handler = new Handler(context.getMainLooper());
         inputSamplesInterceptor = new AudioSamplesInterceptor();
+        folder = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/ReCiak!/Room_" + System.currentTimeMillis() + "/";
         peers = new ArrayList<>();
         videos = new ArrayList<>();
 
