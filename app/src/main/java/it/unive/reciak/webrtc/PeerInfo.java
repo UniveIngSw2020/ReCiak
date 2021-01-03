@@ -1,10 +1,11 @@
-package it.unive.reciak;
+package it.unive.reciak.webrtc;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+// Informazioni di un peer
 public class PeerInfo implements Parcelable {
     // IP del peer
     private final String ip;

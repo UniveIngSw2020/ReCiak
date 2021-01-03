@@ -7,8 +7,9 @@ import org.json.JSONObject;
 
 import java.util.concurrent.ExecutorService;
 
-import it.unive.reciak.PeerInfo;
+import it.unive.reciak.webrtc.PeerInfo;
 
+// Socket ricerca di un peer via Wi-Fi Direct
 public class DiscoverSocket extends TCPChannelClient {
     public DiscoverSocket(ExecutorService executor, TCPChannelEvents eventListener, PeerInfo peerInfo) {
         super(executor, eventListener, peerInfo);
@@ -30,6 +31,8 @@ public class DiscoverSocket extends TCPChannelClient {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+
+            disconnect();
         });
     }
 }

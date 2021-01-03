@@ -1,11 +1,37 @@
 <resources>
-    <string name="app_name">ReCiak!</string>
-    <string name="credits">ADT @ Ca\' Foscari</string>
-    <string name="server_button">CREA</string>
-    <string name="client_button">ENTRA</string>
-    <string name="start_button">INIZIA</string>
+    <string name="app_name" translatable="false">ReCiak!</string>
+    <string name="credits" translatable="false">ADT @ Ca\' Foscari</string>
+    <string name="create">CREATE</string>
+    <string name="join">JOIN</string>
+    <string name="start">START</string>
 
-    <string name="server_description">Attendo i dispositivi…</string>
-    <string name="client_description">Cerco i dispositivi…</string>
-    <string name="connected">Connesso. Attendi…</string>
+    <string name="send_invite">Invite devices</string>
+    <string name="wait_invite">Wait for an invite</string>
+    <string name="searching">Searching nearby devices…</string>
+    <string name="waiting">Waiting for a device request…</string>
+    <string name="connect_success">Connecting to %s…</string>
+    <string name="connect_failure">Failed to connect to %s. Try again</string>
+    <string name="connected">Connected. Please wait…</string>
+
+    <string name="alert_title">Warning</string>
+    <string name="alert_message">Another device is trying to connect</string>
+    <string name="alert_positive">Start anyway</string>
+    <string name="alert_negative">Cancel</string>
+
+    <string name="starting">Please wait…</string>
+    <string name="recording_start">Start recording</string>
+    <string name="recording_stop">Stop recording</string>
+    <string name="recording">New recording started…</string>
+
+    <string name="play">PLAY</string>
+    <string name="share">SHARE</string>
+    <string name="encoding">Encoding videos…</string>
+    <string name="merge">Merging videos…</string>
+    <string name="merge_failed">Merge Failed</string>
+    <string name="result">Recording finished</string>
+
+    <string name="permissions">Check app permissions…</string>
+    <string name="camera_error">Camera not found</string>
+    <string name="connection_error">Unable to establish connection with peer</string>
+    <string name="player_error">Player not found</string>
 </resources>

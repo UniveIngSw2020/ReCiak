@@ -2,59 +2,52 @@ package it.unive.reciak;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.webrtc.SurfaceViewRenderer;
-
 import java.util.ArrayList;
+
+import it.unive.reciak.webrtc.PeerInfo;
+import it.unive.reciak.webrtc.connection.RTCRoomConnection;
 
 public class CallActivity extends AppCompatActivity {
     @Nullable
-    private WebRTC webRtc;
+    private RTCRoomConnection room;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call);
 
-        // View grande
-        SurfaceViewRenderer mainView = findViewById(R.id.mainView);
-        // View piccola
-        SurfaceViewRenderer rightView = findViewById(R.id.rightView);
-
-        // Pulsante registrazione
-        ImageView btnRecord = findViewById(R.id.imageView);
-
-        // Mette rightView in primo piano
-        rightView.setZOrderMediaOverlay(true);
-
         // Salva i peer inseriti nell'activity precedente
         Intent intent = getIntent();
         ArrayList<PeerInfo> peersInfo = intent.getParcelableArrayListExtra("peersInfo");
 
         // Gestore della comunicazione tra i dispositivi via WebRTC
-        webRtc = new WebRTC(mainView, rightView, btnRecord, getApplicationContext());
+        room = new RTCRoomConnection(this);
         try {
             // Prepara la comunicazione
-            webRtc.start();
+            room.start();
         } catch (Throwable e) {
             e.printStackTrace();
         }
 
         // Aggiunge i peer
-        webRtc.addPeers(peersInfo);
+        room.addPeers(peersInfo);
     }
 
     @Override
     public void onDestroy() {
         // Distrugge la stanza
-        if (webRtc != null) {
-            webRtc.dispose();
-            webRtc = null;
+        if (room != null) {
+            room.dispose();
+            room = null;
         }
+        // Disconnessione rete Wi-Fi Direct
+        DiscoverActivity.disconnect();
+
+        finish();
         super.onDestroy();
     }
 }

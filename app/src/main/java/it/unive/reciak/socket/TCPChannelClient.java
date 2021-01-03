@@ -27,29 +27,29 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 
-import it.unive.reciak.PeerInfo;
+import it.unive.reciak.webrtc.PeerInfo;
 
 public class TCPChannelClient {
     private static final String TAG = "TCPChannelClient";
     protected final ExecutorService executor;
-    private final ThreadUtils.ThreadChecker executorThreadCheck;
     private final TCPChannelEvents eventListener;
     private TCPSocket socket;
 
     public interface TCPChannelEvents {
         void onTCPConnected();
         void onTCPMessage(String message);
-        void onTCPError(String description);
+        void onTCPError();
         void onTCPClose();
     }
 
     public TCPChannelClient(ExecutorService executor, TCPChannelEvents eventListener, PeerInfo peerInfo) {
         this.executor = executor;
-        executorThreadCheck = new ThreadUtils.ThreadChecker();
+        ThreadUtils.ThreadChecker executorThreadCheck = new ThreadUtils.ThreadChecker();
         executorThreadCheck.detachThread();
         this.eventListener = eventListener;
         InetAddress address;
@@ -70,18 +70,16 @@ public class TCPChannelClient {
     }
 
     public void disconnect() {
-        executorThreadCheck.checkIsOnValidThread();
         socket.disconnect();
     }
 
     public void send(JSONObject json) {
-        executorThreadCheck.checkIsOnValidThread();
         socket.send(json);
     }
 
     private void reportError(final String message) {
         Log.e(TAG, "TCP Error: " + message);
-        executor.execute(() -> eventListener.onTCPError(message));
+        executor.execute(eventListener::onTCPError);
     }
 
     private abstract class TCPSocket extends Thread {
@@ -125,8 +123,8 @@ public class TCPChannelClient {
             }
             Log.v(TAG, "Execute onTCPConnected");
             executor.execute(() -> {
-                    Log.v(TAG, "Run onTCPConnected");
-                    eventListener.onTCPConnected();
+                Log.v(TAG, "Run onTCPConnected");
+                eventListener.onTCPConnected();
             });
 
             while (true) {
@@ -215,6 +213,8 @@ public class TCPChannelClient {
             }
             try {
                 return tempSocket.accept();
+            } catch (SocketException e) {
+                return null;
             } catch (IOException e) {
                 reportError("Failed to receive connection: " + e.getMessage());
                 return null;

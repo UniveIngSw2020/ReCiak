@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="create">CREA</string>
+    <string name="join">ENTRA</string>
+    <string name="start">INIZIA</string>
+
+    <string name="send_invite">Invita un dispositivo</string>
+    <string name="wait_invite">Attendi un invito</string>
+    <string name="searching">Cerco i dispositivi nelle vicinanze…</string>
+    <string name="waiting">Attendo una richiesta…</string>
+    <string name="connect_success">Connessione a %s in corso…</string>
+    <string name="connect_failure">Connessione a %s fallita. Riprova</string>
+    <string name="connected">Connesso. Attendi…</string>
+
+    <string name="alert_title">Attenzione</string>
+    <string name="alert_message">Un altro dispositivo sta cercando di connettersi</string>
+    <string name="alert_positive">Inizia lo stesso</string>
+    <string name="alert_negative">Annulla</string>
+
+    <string name="starting">Attendi…</string>
+    <string name="recording_start">Inizia registrazione</string>
+    <string name="recording_stop">Termina registrazione</string>
+    <string name="recording">Nuova registrazione in corso…</string>
+
+    <string name="play">PLAY</string>
+    <string name="share">CONDIVIDI</string>
+    <string name="encoding">Codifico i video…</string>
+    <string name="merge">Unisco i video…</string>
+    <string name="merge_failed">Unione fallita</string>
+    <string name="result">Registrazione terminata</string>
+
+    <string name="permissions">Controlla i permessi dell\'app…</string>
+    <string name="camera_error">Impossibile trovare una fotocamera</string>
+    <string name="connection_error">Connessione al peer fallita</string>
+    <string name="player_error">Media player non trovato</string>
+</resources>

@@ -9,8 +9,9 @@ import org.webrtc.SessionDescription;
 
 import java.util.concurrent.ExecutorService;
 
-import it.unive.reciak.PeerInfo;
+import it.unive.reciak.webrtc.PeerInfo;
 
+// Socket connessione a un peer via WebRTC
 public class CallSocket extends TCPChannelClient {
     public CallSocket(ExecutorService executor, TCPChannelEvents eventListener, PeerInfo peerInfo) {
         super(executor, eventListener, new PeerInfo(peerInfo.getIp(), peerInfo.getPort(), !peerInfo.isInitiator()));
@@ -38,13 +39,13 @@ public class CallSocket extends TCPChannelClient {
     }
 
     // Invia informazioni sul dispositivo (es. codec, flussi video da inviare)
-    public void sendSessionDescription(@NonNull SessionDescription sessionDescription, boolean isAnswer) {
+    public void sendSessionDescription(@NonNull SessionDescription sessionDescription, String type) {
         executor.execute(() -> {
             JSONObject packet = new JSONObject();
             JSONObject sessionDescriptionJson = new JSONObject();
 
             try {
-                sessionDescriptionJson.put("isAnswer", isAnswer);
+                sessionDescriptionJson.put("type", type);
                 sessionDescriptionJson.put("sessionDescription", sessionDescription.description);
 
                 packet.put("action", "setSessionDescription");

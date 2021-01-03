@@ -1,8 +1,8 @@
 <resources>
-    <integer name="direct_port">10550</integer>
-    <integer name="port">10551</integer>
-    <integer name="width">1280</integer>
-    <integer name="height">720</integer>
+    <integer name="discover_port">10550</integer>
+    <integer name="call_port">10551</integer>
+    <integer name="width">1920</integer>
+    <integer name="height">1080</integer>
     <integer name="fps">30</integer>
     <integer name="max_users">3</integer>
 </resources>

@@ -1,4 +1,4 @@
-package it.unive.reciak.utils;
+package it.unive.reciak.webrtc;
 
 import org.webrtc.EglBase;
 

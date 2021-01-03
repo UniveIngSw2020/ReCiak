@@ -2,18 +2,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:width="108dp"
     android:height="108dp"
+    android:tint="@color/colorAccent"
     android:viewportWidth="108"
     android:viewportHeight="108"
-    android:tint="@color/colorAccent"
     tools:ignore="VectorRaster">
-  <group android:scaleX="2.025"
+  <group
+      android:scaleX="2.025"
       android:scaleY="2.025"
       android:translateX="37.8"
       android:translateY="37.8">
     <path
-        android:pathData="M0,1a1,1 0,0 1,1 -1h14a1,1 0,0 1,1 1v14a1,1 0,0 1,-1 1L1,16a1,1 0,0 1,-1 -1L0,1zM4,1h8v6L4,7L4,1zM12,9L4,9v6h8L12,9zM1,1h2v2L1,3L1,1zM3,4L1,4v2h2L3,4zM1,7h2v2L1,9L1,7zM3,10L1,10v2h2v-2zM1,13h2v2L1,15v-2zM15,1h-2v2h2L15,1zM13,4h2v2h-2L13,4zM15,7h-2v2h2L15,7zM13,10h2v2h-2v-2zM15,13h-2v2h2v-2z"
         android:fillColor="@color/colorAccent"
         android:fillType="evenOdd"
+        android:pathData="M0,1a1,1 0,0 1,1 -1h14a1,1 0,0 1,1 1v14a1,1 0,0 1,-1 1L1,16a1,1 0,0 1,-1 -1L0,1zM4,1h8v6L4,7L4,1zM12,9L4,9v6h8L12,9zM1,1h2v2L1,3L1,1zM3,4L1,4v2h2L3,4zM1,7h2v2L1,9L1,7zM3,10L1,10v2h2v-2zM1,13h2v2L1,15v-2zM15,1h-2v2h2L15,1zM13,4h2v2h-2L13,4zM15,7h-2v2h2L15,7zM13,10h2v2h-2v-2zM15,13h-2v2h2v-2z"
         tools:ignore="VectorRaster" />
   </group>
 </vector>
