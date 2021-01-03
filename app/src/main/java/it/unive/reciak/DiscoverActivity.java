@@ -254,7 +254,7 @@ public class DiscoverActivity extends AppCompatActivity implements TCPChannelCli
 
             // Se sono il server e non ci sono dispositivi nelle vicinanze, nascondo la lista
             if (isServer && peers.size() == 0) {
-                textDescription.setText(R.string.waiting);
+                textDescription.setText(R.string.searching);
                 spin.setVisibility(View.VISIBLE);
                 textDescription.setVisibility(View.VISIBLE);
                 listView.setVisibility(View.INVISIBLE);
