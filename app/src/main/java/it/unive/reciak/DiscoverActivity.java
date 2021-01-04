@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -157,6 +158,9 @@ public class DiscoverActivity extends AppCompatActivity implements TCPChannelCli
             // Ricerca fallita
             @Override
             public void onFailure(int reasonCode) {
+                LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+                if (!wifiManager.isWifiEnabled()) Toast.makeText(DiscoverActivity.this, "Attiva il Wifi e Riprova", Toast.LENGTH_SHORT).show();
+                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) Toast.makeText(DiscoverActivity.this, "Attiva il GPS e Riprova", Toast.LENGTH_SHORT).show();
                 Toast.makeText(DiscoverActivity.this, "Ricerca fallita", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Discovery failed");
             }
