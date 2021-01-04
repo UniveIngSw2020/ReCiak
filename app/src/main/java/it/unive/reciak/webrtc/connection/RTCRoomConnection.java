@@ -402,7 +402,7 @@ public class RTCRoomConnection {
             CameraVideoCapturer cameraVideoCapturer = (CameraVideoCapturer) localCapture;
             cameraVideoCapturer.switchCamera(null);
         } else {
-            Log.e(TAG, "switchCamera: Failed to switch camera");
+            Log.e(TAG, "switchCamera: failed to switch camera");
         }
     }
 
@@ -423,6 +423,7 @@ public class RTCRoomConnection {
     public synchronized void callActivity() {
         Log.i(TAG, "callActivity");
         if (!closed) {
+            dispose();
             closed = true;
             // Esegue l'activity passando la lista dei peer
             Intent intent = new Intent(context, RenderActivity.class);
@@ -436,47 +437,49 @@ public class RTCRoomConnection {
 
     // Chiude la connessione cancellando tutti i peer
     public void dispose() {
-        Log.i(TAG, "dispose");
-        for (@NonNull RTCPeerConnection peer : peers)
-            peer.dispose();
+        if (!closed) {
+            Log.i(TAG, "dispose");
+            for (@NonNull RTCPeerConnection peer : peers)
+                peer.dispose();
 
-        if (audioSource != null) {
-            Log.i(TAG, "AudioSource: dispose");
-            audioSource.dispose();
-            audioSource = null;
+            if (audioSource != null) {
+                Log.i(TAG, "AudioSource: dispose");
+                audioSource.dispose();
+                audioSource = null;
+            }
+
+            if (localCapture != null) {
+                Log.i(TAG, "LocalCapture: dispose");
+                localCapture.dispose();
+                localCapture = null;
+            }
+
+            if (videoSource != null) {
+                Log.i(TAG, "VideoSource: dispose");
+                videoSource.dispose();
+                videoSource = null;
+            }
+
+            if (helper != null) {
+                Log.i(TAG, "Helper: dispose");
+                helper.dispose();
+                helper = null;
+            }
+
+            Log.i(TAG, "EglBase: dispose");
+            mainView.release();
+            rightView.release();
+            EglUtils.release();
+
+            if (peerConnectionFactory != null) {
+                Log.i(TAG, "PeerConnectionFactory: dispose");
+                peerConnectionFactory.dispose();
+                peerConnectionFactory = null;
+            }
+            peers.clear();
+
+            PeerConnectionFactory.stopInternalTracingCapture();
+            PeerConnectionFactory.shutdownInternalTracer();
         }
-
-        if (localCapture != null) {
-            Log.i(TAG, "LocalCapture: dispose");
-            localCapture.dispose();
-            localCapture = null;
-        }
-
-        if (videoSource != null) {
-            Log.i(TAG, "VideoSource: dispose");
-            videoSource.dispose();
-            videoSource = null;
-        }
-
-        if (helper != null) {
-            Log.i(TAG, "Helper: dispose");
-            helper.dispose();
-            helper = null;
-        }
-
-        Log.i(TAG, "EglBase: dispose");
-        mainView.release();
-        rightView.release();
-        EglUtils.release();
-
-        if (peerConnectionFactory != null) {
-            Log.i(TAG, "PeerConnectionFactory: dispose");
-            peerConnectionFactory.dispose();
-            peerConnectionFactory = null;
-        }
-        peers.clear();
-
-        PeerConnectionFactory.stopInternalTracingCapture();
-        PeerConnectionFactory.shutdownInternalTracer();
     }
 }
