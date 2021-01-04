@@ -63,7 +63,7 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/btnRecord"
         android:layout_width="65dp"
         android:layout_height="65dp"
         android:layout_marginBottom="16dp"
@@ -74,4 +74,16 @@
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/ic_circle" />
+
+    <ImageView
+        android:id="@+id/btnSwitch"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="31dp"
+        android:contentDescription="@string/switch_camera"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/mainView"
+        app:layout_constraintEnd_toStartOf="@+id/btnRecord"
+        app:srcCompat="@drawable/ic_arrow_repeat" />
 </androidx.constraintlayout.widget.ConstraintLayout>

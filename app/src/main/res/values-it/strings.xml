@@ -20,6 +20,7 @@
     <string name="starting">Attendi…</string>
     <string name="recording_start">Inizia registrazione</string>
     <string name="recording_stop">Termina registrazione</string>
+    <string name="switch_camera">Cambia fotocamera</string>
     <string name="recording">Nuova registrazione in corso…</string>
 
     <string name="play">PLAY</string>

@@ -21,6 +21,7 @@
     <string name="starting">Please wait…</string>
     <string name="recording_start">Start recording</string>
     <string name="recording_stop">Stop recording</string>
+    <string name="switch_camera">Switch camera</string>
     <string name="recording">New recording started…</string>
 
     <string name="play">PLAY</string>

@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
 import org.webrtc.Camera1Enumerator;
+import org.webrtc.CameraVideoCapturer;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
 import org.webrtc.MediaConstraints;
@@ -90,6 +91,9 @@ public class RTCRoomConnection {
     // Pulsante avvia/termina registrazione
     @NonNull
     final ImageView btnRecord;
+    // Pulsante cambia fotocamera
+    @NonNull
+    final ImageView btnSwitch;
     @NonNull
     private final CallActivity activity;
     @NonNull
@@ -125,7 +129,8 @@ public class RTCRoomConnection {
 
         mainView = activity.findViewById(R.id.mainView);
         rightView = activity.findViewById(R.id.rightView);
-        btnRecord = activity.findViewById(R.id.imageView);
+        btnRecord = activity.findViewById(R.id.btnRecord);
+        btnSwitch = activity.findViewById(R.id.btnSwitch);
         handler = new Handler(context.getMainLooper());
         inputSamplesInterceptor = new AudioSamplesInterceptor();
         folder = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/ReCiak!/Room_" + System.currentTimeMillis() + "/";
@@ -235,7 +240,7 @@ public class RTCRoomConnection {
         });
 
         // Inizia a registrare
-        btnRecord.setOnClickListener((v) -> {
+        btnRecord.setOnClickListener(v -> {
             if (!sharing) {
                 Log.i(TAG, "btnRecord: start");
                 // Termina condivisione video
@@ -253,6 +258,9 @@ public class RTCRoomConnection {
                 callActivity();
             }
         });
+
+        // Cambia fotocamera
+        btnSwitch.setOnClickListener(v -> switchCamera());
     }
 
     // Crea i peer con le informazioni indicate precedentemente
@@ -384,6 +392,17 @@ public class RTCRoomConnection {
                 values.put(MediaStore.Video.Media.DATA, file.getAbsolutePath());
                 context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
             }
+        }
+    }
+
+    // Switch fotocamera anteriore/posteriore
+    private void switchCamera() {
+        if (localCapture != null && localCapture instanceof CameraVideoCapturer) {
+            Log.i(TAG, "switchCamera");
+            CameraVideoCapturer cameraVideoCapturer = (CameraVideoCapturer) localCapture;
+            cameraVideoCapturer.switchCamera(null);
+        } else {
+            Log.e(TAG, "switchCamera: Failed to switch camera");
         }
     }
 

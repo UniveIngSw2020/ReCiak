@@ -88,6 +88,7 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
             room.runOnUiThread(() -> {
                 room.mainView.setVisibility(View.VISIBLE);
                 room.btnRecord.setVisibility(View.VISIBLE);
+                room.btnSwitch.setVisibility(View.VISIBLE);
             });
         }
     }
@@ -304,6 +305,7 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
                 room.mainView.setVisibility(View.VISIBLE);
                 room.rightView.setVisibility(View.VISIBLE);
                 room.btnRecord.setVisibility(View.VISIBLE);
+                room.btnSwitch.setVisibility(View.VISIBLE);
 
                 // Avvisa l'utente della nuova registrazione
                 Toast toast = Toast.makeText(context, R.string.recording, Toast.LENGTH_SHORT);
