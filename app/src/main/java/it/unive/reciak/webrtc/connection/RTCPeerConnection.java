@@ -111,11 +111,10 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
             // Nasconde la view più piccola
             room.runOnUiThread(() -> room.rightView.setVisibility(View.INVISIBLE));
 
-            if (room.isFirst(this)) {
-                // Visualizza la propria fotocamera nella view centrale
-                room.videoTrack.addSink(room.mainView);
-                executor.execute(() -> room.startRecording(RecordChannel.INPUT));
-            }
+            // Visualizza la propria fotocamera nella view centrale
+            room.videoTrack.addSink(room.mainView);
+            executor.execute(() -> room.startRecording(RecordChannel.INPUT));
+
             // Ha avviato la condivisione video
             room.setSharing(true);
         }
@@ -123,7 +122,7 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
 
     // Termina condivisione video
     public void stopVideo() {
-        //Log.i(TAG, "stopVideo");
+        Log.i(TAG, "stopVideo");
         // Termina la registrazione
         room.stopRecording();
 
@@ -329,6 +328,7 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         room.addUser(this);
     }
 
+    @Override
     // Il dispositivo ha ricevuto un messaggio dal peer
     public void onTCPMessage(@NonNull String message) {
         try {
