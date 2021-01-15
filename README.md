@@ -1,5 +1,5 @@
 # ReCiak!
-![Logo](/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png)
+![Logo](/logo.png)
 
 ReCiak! è un app di registrazione video P2P che comunicando, attraverso lo standard WebRTC, con altri dispositivi, consente un'esperienza video condivisa.
 Gli utenti, registrando a rotazione un flusso video, condividono la propria fotocamera producendo come output un unico video, immediatamente condivisibile sui social network,
