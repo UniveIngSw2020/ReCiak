@@ -20,6 +20,11 @@ import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * Registrazione con encoding audio e video.
+ *
+ * @see <a href="https://github.com/flutter-webrtc/flutter-webrtc/tree/master/android/src/main/java/com/cloudwebrtc/webrtc/record">Sorgente originale</a>
+ */
 public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
     private static final String TAG = "VideoFileRenderer";
 
@@ -33,9 +38,9 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
     private final EglBase.Context sharedContext;
     private VideoFrameDrawer frameDrawer;
 
-    private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
-    private static final int FRAME_RATE = 30;               // 30fps
-    private static final int IFRAME_INTERVAL = 1;           // 5 seconds between I-frames
+    private static final String MIME_TYPE = "video/avc";
+    private static final int FRAME_RATE = 30;
+    private static final int IFRAME_INTERVAL = 1;
 
     private final MediaMuxer mediaMuxer;
     private MediaCodec encoder;
@@ -63,11 +68,7 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
         bufferInfo = new MediaCodec.BufferInfo();
         this.sharedContext = sharedContext;
 
-        // Create a MediaMuxer.  We can't add the video track and start() the muxer here,
-        // because our MediaFormat doesn't have the Magic Goodies.  These can only be
-        // obtained from the encoder after it has started processing data.
-        mediaMuxer = new MediaMuxer(outputFile,
-                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        mediaMuxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
         audioTrackIndex = withAudio ? -1 : 0;
     }
@@ -75,16 +76,12 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
     private void initVideoEncoder() {
         MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, outputFileWidth, outputFileHeight);
 
-        // Set some properties.  Failing to specify some of these can cause the MediaCodec
-        // configure() call to throw an unhelpful exception.
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, 6000000);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
 
-        // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
-        // we can use for input and wrap it with a class that handles the EGL work.
         try {
             encoder = MediaCodec.createEncoderByType(MIME_TYPE);
             encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
@@ -121,7 +118,6 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
         eglBase.swapBuffers();
     }
 
-    // Release all resources. All already posted frames will be rendered first.
     public void release() {
         isRunning = false;
         if (audioThreadHandler != null)
@@ -164,7 +160,6 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 break;
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                // not expected for an encoder
                 MediaFormat newFormat = encoder.getOutputFormat();
 
                 Log.e(TAG, "encoder output format changed: " + newFormat);
@@ -177,14 +172,13 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
                     break;
             } else if (encoderStatus < 0) {
                 Log.e(TAG, "unexpected result fr om encoder.dequeueOutputBuffer: " + encoderStatus);
-            } else { // encoderStatus >= 0
+            } else {
                 try {
                     ByteBuffer encodedData = encoder.getOutputBuffer(encoderStatus);
                     if (encodedData == null) {
                         Log.e(TAG, "encoderOutputBuffer " + encoderStatus + " was null");
                         break;
                     }
-                    // It's usually necessary to adjust the ByteBuffer values to match BufferInfo.
                     encodedData.position(bufferInfo.offset);
                     encodedData.limit(bufferInfo.offset + bufferInfo.size);
                     if (videoFrameStart == 0 && bufferInfo.presentationTimeUs != 0) {
@@ -216,7 +210,6 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 break;
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                // not expected for an encoder
                 MediaFormat newFormat = audioEncoder.getOutputFormat();
 
                 Log.w(TAG, "encoder output format changed: " + newFormat);
@@ -236,7 +229,6 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
                         Log.e(TAG, "encoderOutputBuffer " + encoderStatus + " was null");
                         break;
                     }
-                    // It's usually necessary to adjust the ByteBuffer values to match BufferInfo.
                     encodedData.position(audioBufferInfo.offset);
                     encodedData.limit(audioBufferInfo.offset + audioBufferInfo.size);
                     if (muxerStarted)
@@ -279,7 +271,7 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
                 byte[] data = audioSamples.getData();
                 buffer.put(data);
                 audioEncoder.queueInputBuffer(bufferIndex, 0, data.length, presTime, 0);
-                presTime += data.length * 125 / 12; // 1000000 microseconds / 48000hz / 2 bytes
+                presTime += data.length * 125 / 12;
             }
             drainAudio();
         });

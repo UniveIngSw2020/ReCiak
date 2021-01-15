@@ -2,6 +2,9 @@ package it.unive.reciak.webrtc;
 
 import org.webrtc.EglBase;
 
+/**
+ * Singleton oggetto OpenGL per il rendering dei flussi video locali e remoti.
+ */
 public class EglUtils {
     private static EglBase eglBase;
 
@@ -18,6 +21,9 @@ public class EglUtils {
         return eglBase == null ? null : eglBase.getEglBaseContext();
     }
 
+    /**
+     * Ditrugge l'oggetto EglBase.
+     */
     public static void release() {
         if (eglBase != null) {
             eglBase.release();

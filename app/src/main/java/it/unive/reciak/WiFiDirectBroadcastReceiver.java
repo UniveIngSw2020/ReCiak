@@ -5,12 +5,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
+/**
+ * Gestore cambiamenti di stato nella connessione via Wi-Fi Direct.
+ *
+ * @see <a href="https://developer.android.com/training/connect-devices-wirelessly/wifi-direct">Guida utilizzo Wi-Fi Direct</a>
+ */
 public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
     private final WifiP2pManager manager;
     private final WifiP2pManager.Channel channel;
@@ -22,7 +26,6 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
         this.activity = activity;
     }
 
-    // Gestore cambiamenti di stato nella connessione via Wi-Fi Direct
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -44,12 +47,8 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
                 return;
             }
 
-            NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-            // Se è connesso a un dispositivo
-            if (networkInfo.isConnected()) {
-                // Chiede informazioni sulla connessione
-                manager.requestConnectionInfo(channel, activity.connectionInfoListener);
-            }
+            // Chiede informazioni sulla connessione
+            manager.requestConnectionInfo(channel, activity.connectionInfoListener);
         }
     }
 }

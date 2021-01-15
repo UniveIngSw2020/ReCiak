@@ -32,18 +32,23 @@ import it.unive.reciak.socket.TCPChannelClient;
 import it.unive.reciak.webrtc.PeerInfo;
 import it.unive.reciak.webrtc.record.RecordChannel;
 
-// Gestione di connessione con un peer
+/**
+ * Gestore connessione a un peer.
+ *
+ * @see <a href="https://webrtc.googlesource.com/src/+/master/sdk/android/">Libreria utilizzata</a>
+ */
 class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChannelClient.TCPChannelEvents {
     private static final String TAG = "RTCPeerConnection";
 
     // Gestore connessioni WebRTC
+    @NonNull
     private final RTCRoomConnection room;
 
     // Informazioni del peer
     @NonNull
     private final PeerInfo peerInfo;
 
-    // Gestione socket e registrazione
+    // Executor gestione socket e registrazione
     @NonNull
     private final ExecutorService executor;
     // Socket per la negoziazione della chiamata
@@ -60,9 +65,10 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
     @Nullable
     private RtpSender audioSender;
 
+    @NonNull
     private final Context context;
 
-    public RTCPeerConnection(RTCRoomConnection room, @NonNull PeerInfo peerInfo, Context context) {
+    public RTCPeerConnection(@NonNull RTCRoomConnection room, @NonNull PeerInfo peerInfo, @NonNull Context context) {
         this.room = room;
         this.peerInfo = peerInfo;
         this.context = context;
@@ -71,7 +77,9 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         callSocket = new CallSocket(executor, this, peerInfo);
     }
 
-    // Avvia il peer
+    /**
+     * Avvia la connessione al peer.
+     */
     public void start() {
         Log.i(TAG, "start");
         if (room.peerConnectionFactory == null)
@@ -93,7 +101,9 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         }
     }
 
-    // Avvia condivisione video
+    /**
+     * Avvia condivisione video.
+     */
     public void startVideo() {
         Log.i(TAG, "startVideo");
         // Se non sta già condividendo qualcosa
@@ -106,7 +116,7 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
             audioSender = peerConnection.addTrack(room.audioTrack, mediaStreamLabels);
 
             if (room.videoTrack == null)
-                onError(new Throwable("Impossibile collegarsi alla fotocamera"));
+                onError(new Throwable(context.getString(R.string.camera_error)));
 
             // Nasconde la view più piccola
             room.runOnUiThread(() -> room.rightView.setVisibility(View.INVISIBLE));
@@ -116,17 +126,21 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
             executor.execute(() -> room.startRecording(RecordChannel.INPUT));
 
             // Ha avviato la condivisione video
-            room.setSharing(true);
+            room.setRecordingButton(true);
         }
     }
 
-    // Termina condivisione video
+    /**
+     * Termina condivisione video
+     */
     public void stopVideo() {
         Log.i(TAG, "stopVideo");
         // Termina la registrazione
         room.stopRecording();
 
-        // Le anteprime vengono rimosse
+        // Rimuove il flusso video dalle view
+        room.mainView.clearImage();
+        room.rightView.clearImage();
         if (room.videoTrack != null) {
             room.videoTrack.removeSink(room.mainView);
             room.videoTrack.removeSink(room.rightView);
@@ -151,29 +165,51 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         }
     }
 
-    // Deve iniziare la negoziazione
+    /**
+     * Il dispositivo deve iniziare la negoziazione.
+     *
+     * @return true se il dispositivo deve iniziare la negoziazione
+     */
     public boolean isInitiator() {
         return peerInfo.isInitiator();
     }
 
-    // Aggiunge un altro peer
+    /**
+     * Invia l'indirizzo di un nuovo peer a un dispositivo connesso all'amministratore.
+     *
+     * @param ip IP del nuovo peer
+     * @param port porta del nuovo peer
+     * @param isInitiator true se il dispositivo a cui invio le informazione del nuovo peer deve inizare la negoziazione
+     */
     public void addUser(String ip, int port, boolean isInitiator) {
         // Invia le informazioni del terzo peer
         callSocket.sendAddUser(ip, port, isInitiator);
     }
 
+    /**
+     * Ritorna l'indirizzo IP del peer con cui il dispositivo è connesso.
+     *
+     * @return IP del peer
+     */
     public String getIp() {
         return peerInfo.getIp();
     }
 
-    public void onError(@NonNull Throwable error) {
+    /**
+     * Gestione errori.
+     *
+     * @param error eccezione
+     */
+    private void onError(@NonNull Throwable error) {
         error.printStackTrace();
         room.runOnUiThread(() -> Toast.makeText(context, error.getMessage(), Toast.LENGTH_SHORT).show());
         // Chiude la connessione con l'altro peer
         dispose();
     }
 
-    // Chiude la connessione con il peer
+    /**
+     * Chiude la connessione con il peer.
+     */
     public void dispose() {
         Log.i(TAG, "dispose");
         // Interrompe la condivisione
@@ -190,7 +226,9 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         executor.shutdown();
     }
 
-    // Inizia la negoziazione
+    /**
+     * Inizia la negoziazione con l'altro peer.
+     */
     public void createOffer() {
         Log.i(TAG, "createOffer");
         if (peerConnection != null) {
@@ -199,7 +237,13 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         }
     }
 
-    // Gestione della SessionDescription remota
+    /**
+     * Gestione della SessionDescription remota.
+     * Salva la SessionDescription del peer e risponde.
+     *
+     * @param description messaggio di tipo SessionDescription
+     * @param type offer/answer
+     */
     private void setRemoteDescription(String description, String type) {
         if (peerConnection != null) {
             SessionDescription sessionDescription = new SessionDescription(SessionDescription.Type.fromCanonicalForm(type), description);
@@ -288,7 +332,8 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         if (track instanceof VideoTrack) {
             // Termina condivisione video
             room.stopVideo();
-            room.setSharing(false);
+            // Cambia l'icona del pulsante di registrazione
+            room.setRecordingButton(false);
 
             // Visualizza il flusso video nella view principale
             room.remoteVideoTrack = (VideoTrack) track;
@@ -328,17 +373,16 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
         room.addUser(this);
     }
 
-    @Override
     // Il dispositivo ha ricevuto un messaggio dal peer
-    public void onTCPMessage(@NonNull String message) {
+    @Override
+    public void onTCPMessage(@NonNull JSONObject message) {
         try {
-            JSONObject packet = new JSONObject(message);
-            String action = packet.getString("action");
+            String action = message.getString("action");
             // Risponde in base al messaggio ricevuto
             switch (action) {
                 // Riceve informazioni di trasmissione del peer
                 case "setSessionDescription":
-                    JSONObject sessionDescriptionJson = packet.getJSONObject("value");
+                    JSONObject sessionDescriptionJson = message.getJSONObject("value");
                     String type = sessionDescriptionJson.getString("type");
                     String sessionDescription = sessionDescriptionJson.getString("sessionDescription");
 
@@ -351,7 +395,7 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
                     break;
                 // Informazioni sull'indirizzo del peer
                 case "addIceCandidate":
-                    JSONObject iceCandidateJson = packet.getJSONObject("value");
+                    JSONObject iceCandidateJson = message.getJSONObject("value");
                     String sdp = iceCandidateJson.getString("sdp");
                     int sdpMLineIndex = iceCandidateJson.getInt("sdpMLineIndex");
                     String sdpMid = iceCandidateJson.getString("sdpMid");
@@ -363,7 +407,7 @@ class RTCPeerConnection implements SdpObserver, PeerConnection.Observer, TCPChan
                     break;
                 // Informazioni di un altro peer connesso all'amministratore
                 case "addUser":
-                    JSONObject userJson = packet.getJSONObject("value");
+                    JSONObject userJson = message.getJSONObject("value");
                     String newPartnerIp = userJson.getString("partnerIp");
                     int newPartnerPort = userJson.getInt("partnerPort");
                     boolean newIsInitiator = userJson.getBoolean("isInitiator");

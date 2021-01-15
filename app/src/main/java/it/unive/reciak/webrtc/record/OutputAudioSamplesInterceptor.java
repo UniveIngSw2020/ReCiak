@@ -1,8 +1,12 @@
 package it.unive.reciak.webrtc.record;
 
 import org.webrtc.audio.JavaAudioDeviceModule;
-import org.webrtc.audio.WebRtcAudioTrackUtils;
+import org.webrtc.audio.WebRTCAudioTrackUtils;
 
+/**
+ * Sottoclasse di AudioSamplesInterceptor per la registrazione remota.
+ * Vengono usate le callback di org.webrtc.audio.WebRTCAudioTrackUtils.
+ */
 public class OutputAudioSamplesInterceptor extends AudioSamplesInterceptor {
     private final JavaAudioDeviceModule audioDeviceModule;
 
@@ -14,7 +18,7 @@ public class OutputAudioSamplesInterceptor extends AudioSamplesInterceptor {
     @Override
     public void attachCallback(Integer id, JavaAudioDeviceModule.SamplesReadyCallback callback) throws Exception {
         if (callbacks.isEmpty())
-            WebRtcAudioTrackUtils.attachOutputCallback(this, audioDeviceModule);
+            WebRTCAudioTrackUtils.attachOutputCallback(this, audioDeviceModule);
         super.attachCallback(id, callback);
     }
 
@@ -22,6 +26,6 @@ public class OutputAudioSamplesInterceptor extends AudioSamplesInterceptor {
     public void detachCallback(Integer id) {
         super.detachCallback(id);
         if (callbacks.isEmpty())
-            WebRtcAudioTrackUtils.detachOutputCallback(audioDeviceModule);
+            WebRTCAudioTrackUtils.detachOutputCallback(audioDeviceModule);
     }
 }

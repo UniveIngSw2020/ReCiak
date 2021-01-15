@@ -11,8 +11,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 
-import java.util.ArrayList;
-
+/**
+ * Activity menu principale con pulsanti "CREA" ed "ENTRA".
+ */
 public class MainActivity extends AppCompatActivity {
     // Permessi
     @NonNull
@@ -35,11 +36,14 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, PERMISSIONS, 1);
     }
 
-    // Esegue l'activity ConnectActivity specificando, se l'utente vuole creare o entrare in una stanza
+    /**
+     * Avvia l'activity DiscoverActivity specificando se l'utente vuole creare o entrare in una stanza.
+     *
+     * @param isServer positivo se l'utente ha scelto di creare una stanza, falso altrimenti
+     */
     private void callActivity(boolean isServer) {
         Intent intent = new Intent(this, DiscoverActivity.class);
         intent.putExtra("isServer", isServer);
-        intent.putExtra("peersInfo", new ArrayList<String>());
         startActivity(intent);
     }
 
@@ -47,20 +51,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 1) {
-            boolean granted = true;
             for (int grantResult : grantResults) {
+                // Se un permesso non è stato concesso
                 if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                    // Un permesso è stato rifiutato
-                    granted = false;
+                    // Avvisa l'utente ed esce dall'app
+                    Toast.makeText(getApplicationContext(), R.string.permissions, Toast.LENGTH_SHORT).show();
+                    finish();
                     break;
                 }
-            }
-
-            // Se un permesso non è stato concesso
-            if (!granted) {
-                // Avvisa l'utente ed esce dall'app
-                Toast.makeText(getApplicationContext(), R.string.permissions, Toast.LENGTH_SHORT).show();
-                finish();
             }
         }
     }

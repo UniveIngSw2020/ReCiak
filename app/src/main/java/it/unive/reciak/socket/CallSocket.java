@@ -11,57 +11,66 @@ import java.util.concurrent.ExecutorService;
 
 import it.unive.reciak.webrtc.PeerInfo;
 
-// Socket connessione a un peer via WebRTC
+/**
+ * Socket connessione a un peer via WebRTC.
+ */
 public class CallSocket extends TCPChannelClient {
     public CallSocket(ExecutorService executor, TCPChannelEvents eventListener, PeerInfo peerInfo) {
         super(executor, eventListener, new PeerInfo(peerInfo.getIp(), peerInfo.getPort(), !peerInfo.isInitiator()));
     }
 
-    // Invia informazioni sull'indirizzo del peer
+    /**
+     * Invia informazioni ICE (utile a stabilire una connessione con l'altro dispositivo).
+     *
+     * @param iceCandidate informazioni ICE
+     */
     public void sendIceCandidate(@NonNull IceCandidate iceCandidate) {
         executor.execute(() -> {
             JSONObject iceCandidateJson = new JSONObject();
-            JSONObject packet = new JSONObject();
 
             try {
                 iceCandidateJson.put("sdp", iceCandidate.sdp);
                 iceCandidateJson.put("sdpMLineIndex", iceCandidate.sdpMLineIndex);
                 iceCandidateJson.put("sdpMid", iceCandidate.sdpMid);
 
-                packet.put("action", "addIceCandidate");
-                packet.put("value", iceCandidateJson);
-
-                send(packet);
+                send("addIceCandidate", iceCandidateJson);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         });
     }
 
-    // Invia informazioni sul dispositivo (es. codec, flussi video da inviare)
-    public void sendSessionDescription(@NonNull SessionDescription sessionDescription, String type) {
+    /**
+     * Invia informazioni sul dispositivo (es. codec, flussi video da inviare).
+     *
+     * @param sessionDescription SessionDescription creata in precedenza
+     * @param type tipo offer/answer
+     */
+    public void sendSessionDescription(@NonNull SessionDescription sessionDescription, @NonNull String type) {
         executor.execute(() -> {
-            JSONObject packet = new JSONObject();
             JSONObject sessionDescriptionJson = new JSONObject();
 
             try {
                 sessionDescriptionJson.put("type", type);
                 sessionDescriptionJson.put("sessionDescription", sessionDescription.description);
 
-                packet.put("action", "setSessionDescription");
-                packet.put("value", sessionDescriptionJson);
-
-                send(packet);
+                send("setSessionDescription", sessionDescriptionJson);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         });
     }
 
-    // Invia ai peer le informazioni per connettersi fra loro. Inizialmente i peer sono connessi soltanto al creatore della stanza
+    /**
+     * Invia a un peer le informazioni per connettersi fra loro.
+     * Inizialmente i peer sono connessi solamente all'amministratore della stanza.
+     *
+     * @param partnerIp ip del peer
+     * @param partnerPort porta del peer
+     * @param isInitiator true se deve avviare la negoziazione
+     */
     public void sendAddUser(@NonNull String partnerIp, int partnerPort, boolean isInitiator) {
         executor.execute(() -> {
-            JSONObject packet = new JSONObject();
             JSONObject userJson = new JSONObject();
 
             try {
@@ -69,9 +78,7 @@ public class CallSocket extends TCPChannelClient {
                 userJson.put("partnerPort", partnerPort);
                 userJson.put("isInitiator", isInitiator);
 
-                packet.put("action", "addUser");
-                packet.put("value", userJson);
-                send(packet);
+                send("addUser", userJson);
             } catch (JSONException e) {
                 e.printStackTrace();
             }

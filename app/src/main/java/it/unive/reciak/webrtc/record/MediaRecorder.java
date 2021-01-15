@@ -10,6 +10,9 @@ import java.io.File;
 
 import it.unive.reciak.webrtc.EglUtils;
 
+/**
+ * Gestore avvio/terminazione registrazione.
+ */
 public class MediaRecorder {
     private static final String TAG = "MediaRecorder";
 
@@ -17,15 +20,19 @@ public class MediaRecorder {
     private final AudioSamplesInterceptor audioInterceptor;
     private VideoFileRenderer videoFileRenderer;
     private boolean isRunning = false;
-    private File recordFile;
 
     public MediaRecorder( @Nullable VideoTrack videoTrack, @Nullable AudioSamplesInterceptor audioInterceptor) {
         this.videoTrack = videoTrack;
         this.audioInterceptor = audioInterceptor;
     }
 
+    /**
+     * Avvia registrazione.
+     *
+     * @param file File registrazione
+     * @throws Exception VideoTrack null
+     */
     public void startRecording(File file) throws Exception {
-        recordFile = file;
         if (isRunning)
             return;
         isRunning = true;
@@ -44,10 +51,9 @@ public class MediaRecorder {
         }
     }
 
-    public File getRecordFile() {
-        return recordFile;
-    }
-
+    /**
+     * Termina registrazione.
+     */
     public void stopRecording() {
         isRunning = false;
         if (audioInterceptor != null)

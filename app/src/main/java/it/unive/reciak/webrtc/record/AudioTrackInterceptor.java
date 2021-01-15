@@ -14,16 +14,17 @@ import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
 import java.nio.ByteBuffer;
 
 /**
- * Wrapper around audio track
- * Intercepts write calls and passes it to callback
- * **/
+ * Sottoclasse di AudioTrack.
+ * Aggiunge le chiamate alle callback per catturare l'audio da registrare.
+ *
+ * @see <a href="https://github.com/flutter-webrtc/flutter-webrtc/tree/master/android/src/main/java/com/cloudwebrtc/webrtc/record">Sorgente originale</a>
+ */
 public final class AudioTrackInterceptor extends AudioTrack {
     final public AudioTrack originalTrack;
     final private SamplesReadyCallback callback;
 
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public AudioTrackInterceptor(@NonNull AudioTrack originalTrack, @NonNull SamplesReadyCallback callback) {
-        // That just random params, we don't care about object that will be created
         super(AudioManager.STREAM_VOICE_CALL, 44200, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 128, AudioTrack.MODE_STREAM);
 
         this.originalTrack = originalTrack;
@@ -32,6 +33,7 @@ public final class AudioTrackInterceptor extends AudioTrack {
 
     @Override
     public int write(@NonNull byte[] audioData, int offsetInBytes, int sizeInBytes) {
+        // Chiama la callback della registrazione
         callback.onWebRtcAudioRecordSamplesReady(new AudioSamples(
                 originalTrack.getAudioFormat(),
                 originalTrack.getChannelCount(),
@@ -44,6 +46,7 @@ public final class AudioTrackInterceptor extends AudioTrack {
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public int write(@NonNull ByteBuffer audioData, int sizeInBytes, int writeMode) {
+        // Chiama la callback della registrazione
         byte[] trimmed = new byte[sizeInBytes];
         int position = audioData.position();
         audioData.get(trimmed, 0, sizeInBytes);
@@ -57,11 +60,7 @@ public final class AudioTrackInterceptor extends AudioTrack {
         return originalTrack.write(audioData, sizeInBytes, writeMode);
     }
 
-    /**
-     * Override all required calls to mimic original track
-     * https://webrtc.googlesource.com/src/+/master/sdk/android/src/java/org/webrtc/audio/WebRtcAudioTrack.java
-     * **/
-
+    // Stub traccia audio originale
     @Override
     public int getPlayState() {
         return originalTrack.getPlayState();

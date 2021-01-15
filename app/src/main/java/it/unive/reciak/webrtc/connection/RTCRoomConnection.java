@@ -1,11 +1,8 @@
 package it.unive.reciak.webrtc.connection;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Environment;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -43,7 +40,11 @@ import it.unive.reciak.webrtc.record.MediaRecorder;
 import it.unive.reciak.webrtc.record.OutputAudioSamplesInterceptor;
 import it.unive.reciak.webrtc.record.RecordChannel;
 
-// Gestione connessione alla stanza
+/**
+ * Gestore connessione a una stanza.
+ *
+ * @see <a href="https://webrtc.googlesource.com/src/+/master/sdk/android/">Libreria utilizzata</a>
+ */
 public class RTCRoomConnection {
     private final String TAG = "RTCRoomConnection";
 
@@ -101,26 +102,28 @@ public class RTCRoomConnection {
     @Nullable
     private final Handler handler;
 
-    @Nullable
-    private final AudioSamplesInterceptor inputSamplesInterceptor;
+    // Gestore audio locale
     @Nullable
     private JavaAudioDeviceModule audioDeviceModule;
+    // Gestore avvio/terminazione registrazione
     @Nullable
     private MediaRecorder mediaRecorder;
+    // Callback registrazione audio locale
+    @Nullable
+    private final AudioSamplesInterceptor inputSamplesInterceptor;
+    // Callback registrazione audio remoto
     @Nullable
     private OutputAudioSamplesInterceptor outputSamplesInterceptor;
 
     // File video registrati
     @Nullable
     private final ArrayList<String> videos;
-    // Cartella contenente le registrazioni
-    @NonNull
-    private final String folder;
 
     // Sta condividendo la fotocamera
     private boolean sharing;
     // L'utente ha scambiato le view
     private boolean swap;
+    // Stanza distrutta
     private boolean closed;
 
     public RTCRoomConnection(@NonNull CallActivity activity) {
@@ -133,7 +136,6 @@ public class RTCRoomConnection {
         btnSwitch = activity.findViewById(R.id.btnSwitch);
         handler = new Handler(context.getMainLooper());
         inputSamplesInterceptor = new AudioSamplesInterceptor();
-        folder = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/ReCiak!/Room_" + System.currentTimeMillis() + "/";
         peers = new ArrayList<>();
         videos = new ArrayList<>();
 
@@ -142,11 +144,17 @@ public class RTCRoomConnection {
         closed = false;
     }
 
-    // Avvia connessione con il peer
+    /**
+     * Prepara il dispositivo a connettersi alla stanza, cercando la fotocamera e preparando la
+     * fabbrica delle connessioni.
+     */
     public void start() {
         Log.i(TAG, "start");
         // Mette rightView in primo piano
         rightView.setZOrderMediaOverlay(true);
+
+        // Elimina le clip della sessione precedente
+        RenderActivity.deleteFiles(context);
 
         // Cerca la fotocamera posteriore
         @NonNull
@@ -175,7 +183,7 @@ public class RTCRoomConnection {
             mainView.init(EglUtils.getEglBaseContext(), null);
         });
 
-        // Preapara la fabbrica di connessioni ai peer
+        // Prepara la fabbrica di connessioni ai peer
         PeerConnectionFactory.InitializationOptions initializationOptions = PeerConnectionFactory.InitializationOptions
                 .builder(context)
                 .createInitializationOptions();
@@ -185,12 +193,14 @@ public class RTCRoomConnection {
         options.networkIgnoreMask = 0;
         options.disableNetworkMonitor = true;
 
+        // Gestore audio del proprio dispositivo
         audioDeviceModule = JavaAudioDeviceModule.builder(context)
                 .setUseHardwareAcousticEchoCanceler(true)
                 .setUseHardwareNoiseSuppressor(true)
                 .setSamplesReadyCallback(inputSamplesInterceptor)
                 .createAudioDeviceModule();
 
+        // Crea la fabbrica
         peerConnectionFactory = PeerConnectionFactory.builder()
                 .setVideoDecoderFactory(new DefaultVideoDecoderFactory(EglUtils.getEglBaseContext()))
                 .setVideoEncoderFactory(new DefaultVideoEncoderFactory(EglUtils.getEglBaseContext(), true, true))
@@ -239,7 +249,7 @@ public class RTCRoomConnection {
             }
         });
 
-        // Inizia a registrare
+        // Pulsante inizia/termina registrazione
         btnRecord.setOnClickListener(v -> {
             if (!sharing) {
                 Log.i(TAG, "btnRecord: start");
@@ -251,7 +261,7 @@ public class RTCRoomConnection {
                     // Rinegozia
                     peer.createOffer();
                 }
-                setSharing(true);
+                setRecordingButton(true);
             } else {
                 Log.i(TAG, "btnRecord: stop");
                 // Avvia il rendering
@@ -263,8 +273,12 @@ public class RTCRoomConnection {
         btnSwitch.setOnClickListener(v -> switchCamera());
     }
 
-    // Crea i peer con le informazioni indicate precedentemente
-    public void addPeers(@NonNull ArrayList<PeerInfo> peersInfo) {
+    /**
+     * Aggiunge e crea una connessione per ciascun peer.
+     *
+     * @param peersInfo indirizzi dei peer
+     */
+    public synchronized void addPeers(@NonNull ArrayList<PeerInfo> peersInfo) {
         for (@NonNull PeerInfo peerInfo : peersInfo) {
             @NonNull
             RTCPeerConnection peerConnection;
@@ -277,33 +291,53 @@ public class RTCRoomConnection {
         }
     }
 
-    // Indice del peer
-    public int peerIndex(@NonNull RTCPeerConnection peer) {
+    /**
+     * Dato un peer ritorna l'indice della lista.
+     *
+     * @param peer peer da cercare nella lista
+     * @return indice del peer della lista
+     */
+    public synchronized int peerIndex(@NonNull RTCPeerConnection peer) {
         return peers.indexOf(peer);
     }
 
-    // Verifica se il peer è stato il primo ad essere stato creato
-    public boolean isFirst(@NonNull RTCPeerConnection peer) {
+    /**
+     * Verifica se il peer è stato il primo ad essere stato creato.
+     *
+     * @param peer peer da cercare nella lista
+     * @return true se è il primo peer della lista
+     */
+    public synchronized boolean isFirst(@NonNull RTCPeerConnection peer) {
         return peerIndex(peer) == 0;
     }
 
-    // Verifica se il dispositivo è l'amministratore
-    protected boolean isServer() {
+    /**
+     * Verifica se il dispositivo è l'amministratore.
+     *
+     * @return true se il dispositivo amministra la stanza
+     */
+    protected synchronized boolean isServer() {
         @NonNull
         RTCPeerConnection first = peers.get(0);
 
         return isFirst(first) && first.isInitiator();
     }
 
-    // Termina la condivisione video verso tutti i peer
-    public void stopVideo() {
+    /**
+     * Termina la condivisione video verso tutti i peer.
+     */
+    public synchronized void stopVideo() {
         Log.i(TAG, "stopVideo");
         for (RTCPeerConnection peer : peers)
             peer.stopVideo();
     }
 
-    // Condivisione avviata/interrotta
-    public synchronized void setSharing(boolean isSharing) {
+    /**
+     * Cambia la descrizione e l'icona del pulsante avvia/termina registrazione.
+     *
+     * @param isSharing true se il dispositivo sta condividendo la propria fotocamera
+     */
+    public synchronized void setRecordingButton(boolean isSharing) {
         String description;
         int draw;
 
@@ -324,7 +358,12 @@ public class RTCRoomConnection {
         this.sharing = isSharing;
     }
 
-    // Gestione aggiunta utenti
+    /**
+     * Gestione aggiunta utenti.
+     * Necessaria per connettere i peer fra loro.
+     *
+     * @param currentPeer peer corrente
+     */
     public synchronized void addUser(RTCPeerConnection currentPeer) {
         // Se sono l'amministratore
         if (isServer()) {
@@ -349,14 +388,18 @@ public class RTCRoomConnection {
         }
     }
 
-    // Avvia la registrazione
+    /**
+     * Avvia la registrazione.
+     *
+     * @param audioChannel registrazione locale o remota
+     */
     public synchronized void startRecording(@Nullable RecordChannel audioChannel) {
         Log.i(TAG, "startRecording");
         VideoTrack track = null;
         if (videos != null) {
             try {
                 // Aggiunge la nuova registrazione nella lista dei video
-                final String videoName = "VID-" + videos.size() + ".mp4";
+                final String videoName = "VID_" + videos.size() + ".mp4";
                 videos.add(videoName);
                 AudioSamplesInterceptor interceptor = null;
                 if (audioChannel == RecordChannel.INPUT) {
@@ -372,30 +415,25 @@ public class RTCRoomConnection {
                 }
                 // Avvia la registrazione
                 mediaRecorder = new MediaRecorder(track, interceptor);
-                mediaRecorder.startRecording(new File(folder + videoName));
+                mediaRecorder.startRecording(new File(context.getFilesDir().getAbsolutePath(), videoName));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    // Termina la registrazione
+    /**
+     * Termina la registrazione.
+     */
     public synchronized void stopRecording() {
         Log.i(TAG, "stopRecording");
-        if (mediaRecorder != null) {
+        if (mediaRecorder != null)
             mediaRecorder.stopRecording();
-            File file = mediaRecorder.getRecordFile();
-            if (file != null) {
-                ContentValues values = new ContentValues(3);
-                values.put(MediaStore.Video.Media.TITLE, file.getName());
-                values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
-                values.put(MediaStore.Video.Media.DATA, file.getAbsolutePath());
-                context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-            }
-        }
     }
 
-    // Switch fotocamera anteriore/posteriore
+    /**
+     * Switch fotocamera anteriore/posteriore.
+     */
     private void switchCamera() {
         if (localCapture != null && localCapture instanceof CameraVideoCapturer) {
             Log.i(TAG, "switchCamera");
@@ -406,6 +444,11 @@ public class RTCRoomConnection {
         }
     }
 
+    /**
+     * Gestione errori.
+     *
+     * @param error eccezione
+     */
     private void onError(@NonNull Throwable error) {
         error.printStackTrace();
         Toast.makeText(context, error.getMessage(), Toast.LENGTH_SHORT).show();
@@ -413,30 +456,37 @@ public class RTCRoomConnection {
         dispose();
     }
 
-    // Esegue una runnable sul thread principale
+    /**
+     * Esegue una runnable nel thread principale.
+     *
+     * @param r runnable da eseguire
+     */
     public void runOnUiThread(Runnable r) {
         if (handler != null)
             handler.post(r);
     }
 
-    // Avvia la fusione dei video
+    /**
+     * Avvia l'activity RenderActivity e avvia il rendering.
+     */
     public synchronized void callActivity() {
         Log.i(TAG, "callActivity");
         if (!closed) {
             dispose();
             closed = true;
-            // Esegue l'activity passando la lista dei peer
+            // Esegue l'activity passando la lista dei video
             Intent intent = new Intent(context, RenderActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra("folder", folder);
             intent.putExtra("videos", videos);
             context.startActivity(intent);
             activity.finish();
         }
     }
 
-    // Chiude la connessione cancellando tutti i peer
-    public void dispose() {
+    /**
+     * Chiude la stanza disconnettendosi da tutti i peer.
+     */
+    public synchronized void dispose() {
         if (!closed) {
             Log.i(TAG, "dispose");
             for (@NonNull RTCPeerConnection peer : peers)

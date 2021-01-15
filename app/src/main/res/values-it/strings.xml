@@ -9,6 +9,9 @@
     <string name="searching">Cerco i dispositivi nelle vicinanze…</string>
     <string name="waiting">Attendo una richiesta…</string>
     <string name="connect_success">Connessione a %s in corso…</string>
+    <string name="wifi_unsupported">Wi-Fi Direct non supportato</string>
+    <string name="wifi_disabled">Abilita il Wi-Fi e riprova</string>
+    <string name="gps_disabled">Abilita il GPS e riprova</string>
     <string name="connect_failure">Connessione a %s fallita. Riprova</string>
     <string name="connected">Connesso. Attendi…</string>
 

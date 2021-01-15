@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import it.unive.reciak.webrtc.PeerInfo;
 import it.unive.reciak.webrtc.connection.RTCRoomConnection;
 
+/**
+ * Activity condivisione e registrazione video.
+ */
 public class CallActivity extends AppCompatActivity {
     @Nullable
     private RTCRoomConnection room;
@@ -47,7 +50,6 @@ public class CallActivity extends AppCompatActivity {
         // Disconnessione rete Wi-Fi Direct
         DiscoverActivity.disconnect();
 
-        finish();
         super.onDestroy();
     }
 }

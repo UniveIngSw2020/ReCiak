@@ -4,8 +4,11 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-// Informazioni di un peer
+/**
+ * Informazioni del peer
+ */
 public class PeerInfo implements Parcelable {
     // IP del peer
     private final String ip;
@@ -20,7 +23,14 @@ public class PeerInfo implements Parcelable {
         isInitiator = parcel.readInt();
     }
 
-    public PeerInfo(@NonNull String ip, int port, boolean isInitiator) {
+    /**
+     * Costruttore di PeerInfo.
+     *
+     * @param ip indirizzo IP del peer
+     * @param port porta del peer
+     * @param isInitiator true se il dispositivo deve iniziare la comunicazione, false se è compito del peer
+     */
+    public PeerInfo(@Nullable String ip, int port, boolean isInitiator) {
         this.ip = ip;
         this.port = port;
         this.isInitiator = isInitiator ? 1 : 0;

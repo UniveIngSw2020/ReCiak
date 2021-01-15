@@ -10,6 +10,9 @@
     <string name="searching">Searching nearby devices…</string>
     <string name="waiting">Waiting for a device request…</string>
     <string name="connect_success">Connecting to %s…</string>
+    <string name="wifi_unsupported">Wi-Fi Direct not supported</string>
+    <string name="wifi_disabled">Enable Wi-Fi and try again</string>
+    <string name="gps_disabled">Enable GPS and try again</string>
     <string name="connect_failure">Failed to connect to %s. Try again</string>
     <string name="connected">Connected. Please wait…</string>
 

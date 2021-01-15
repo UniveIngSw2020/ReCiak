@@ -1,21 +1,10 @@
-/*
- *  Copyright 2016 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- *
- * Source: https://webrtc.googlesource.com/src/+/master/examples/androidapp/src/org/appspot/apprtc/TCPChannelClient.java
- */
-
 package it.unive.reciak.socket;
 
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.ThreadUtils;
 
@@ -34,16 +23,42 @@ import java.util.concurrent.ExecutorService;
 
 import it.unive.reciak.webrtc.PeerInfo;
 
+/**
+ * Socket Server e Client con callback.
+ * 
+ * @see <a href="https://webrtc.googlesource.com/src/+/master/examples/androidapp/src/org/appspot/apprtc/TCPChannelClient.java">Sorgente originale</a>
+ * @author <a href="https://webrtc.googlesource.com/src/+/master/AUTHORS">AUTHORS</a>
+ */
 public class TCPChannelClient {
     private static final String TAG = "TCPChannelClient";
+    // Executor gestione callback
     protected final ExecutorService executor;
+    // Callback eventi
     private final TCPChannelEvents eventListener;
+    // Socket client/server
     private TCPSocket socket;
 
+    /**
+     * Gestore eventi socket.
+     */
     public interface TCPChannelEvents {
+        /**
+         * Callback dispositivo connesso al socket.
+         */
         void onTCPConnected();
-        void onTCPMessage(String message);
+        /**
+         * Callback messaggio ricevuto.
+         *
+         * @param message messaggio JSON
+         */
+        void onTCPMessage(JSONObject message);
+        /**
+         * Callback errore di connessione.
+         */
         void onTCPError();
+        /**
+         * Callback socket chiuso.
+         */
         void onTCPClose();
     }
 
@@ -57,39 +72,74 @@ public class TCPChannelClient {
         try {
             address = InetAddress.getByName(peerInfo.getIp());
         } catch (UnknownHostException e) {
-            reportError("Invalid IP address.");
+            onError("Invalid IP address.");
             return;
         }
 
+        // Se devo iniziare la comunicazione creo un ServerSocket
         if (peerInfo.isInitiator()) {
             socket = new TCPSocketServer(peerInfo.getPort());
         } else {
+            // Altrimenti creo un Socket
             socket = new TCPSocketClient(address, peerInfo.getPort());
         }
+        // Avvia il socket
         socket.start();
     }
 
+    /**
+     * Chiude il socket.
+     */
     public void disconnect() {
         socket.disconnect();
     }
 
-    public void send(JSONObject json) {
-        socket.send(json);
+    /**
+     * Invia un pacchetto JSON all'altro dispositivo.
+     *
+     * @param action tipo di messaggio
+     * @param json corpo del messaggio
+     */
+    public void send(String action, JSONObject json) {
+        // Crea il pacchetto JSON
+        JSONObject packet = new JSONObject();
+
+        try {
+            packet.put("action", action);
+            packet.put("value", json);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        // Invia il pacchetto
+        socket.send(packet);
     }
 
-    private void reportError(final String message) {
+    /**
+     * Errore di connessione al socket.
+     *
+     * @param message messaggio d'errore
+     */
+    private void onError(final String message) {
         Log.e(TAG, "TCP Error: " + message);
         executor.execute(eventListener::onTCPError);
     }
 
+    /**
+     * Classe padre di TCPSocketClient e TCPSocketServer.
+     */
     private abstract class TCPSocket extends Thread {
-        // Lock for editing out and rawSocket
+        // Lock gestione rawSocket e out
         protected final Object rawSocketLock;
         @Nullable
         private PrintWriter out;
         @Nullable
         private Socket rawSocket;
 
+        /**
+         * Creazione del socket e connessione all'altro dispositivo.
+         *
+         * @return socket per comunicare con l'altro dispositivo
+         */
         @Nullable
         public abstract Socket connect();
 
@@ -101,23 +151,26 @@ public class TCPChannelClient {
         public void run() {
             Log.d(TAG, "Listening thread started...");
 
+            // Crea il socket
             Socket tempSocket = connect();
             BufferedReader in;
             Log.d(TAG, "TCP connection established.");
             synchronized (rawSocketLock) {
+                // Salva il socket
                 if (rawSocket != null) {
                     Log.e(TAG, "Socket already existed and will be replaced.");
                 }
                 rawSocket = tempSocket;
-                // Connecting failed, error has already been reported, just exit.
+                // Connessione fallita
                 if (rawSocket == null) {
                     return;
                 }
+                // Buffer scrittura e lettura
                 try {
                     out = new PrintWriter(new OutputStreamWriter(rawSocket.getOutputStream(), StandardCharsets.UTF_8), true);
                     in = new BufferedReader(new InputStreamReader(rawSocket.getInputStream(), StandardCharsets.UTF_8));
                 } catch (IOException e) {
-                    reportError("Failed to open IO on rawSocket: " + e.getMessage());
+                    onError("Failed to open IO on rawSocket: " + e.getMessage());
                     return;
                 }
             }
@@ -127,34 +180,46 @@ public class TCPChannelClient {
                 eventListener.onTCPConnected();
             });
 
+            // Ricezione messaggi
             while (true) {
                 final String message;
+                // Salva il messaggio
                 try {
                     message = in.readLine();
                 } catch (IOException e) {
                     synchronized (rawSocketLock) {
-                        // If socket was closed, this is expected.
+                        // Socket chiuso
                         if (rawSocket == null) {
                             break;
                         }
                     }
-                    reportError("Failed to read from rawSocket: " + e.getMessage());
+                    onError("Failed to read from rawSocket: " + e.getMessage());
                     break;
                 }
-                // No data received, rawSocket probably closed.
+                // Non ha ricevuto messaggi. Probabilmente il socket è chiuso
                 if (message == null) {
                     break;
                 }
+                // Messaggio ricevuto
                 executor.execute(() -> {
                     Log.v(TAG, "Receive: " + message);
-                    eventListener.onTCPMessage(message);
+
+                    try {
+                        JSONObject packet = new JSONObject(message);
+                        eventListener.onTCPMessage(packet);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 });
             }
             Log.d(TAG, "Receiving thread exiting...");
-            // Close the rawSocket if it is still open.
+            // Chiude il socket
             disconnect();
         }
 
+        /**
+         * Disconnessione del socket.
+         */
         public void disconnect() {
             try {
                 synchronized (rawSocketLock) {
@@ -166,17 +231,22 @@ public class TCPChannelClient {
                     }
                 }
             } catch (IOException e) {
-                reportError("Failed to close rawSocket: " + e.getMessage());
+                onError("Failed to close rawSocket: " + e.getMessage());
             }
         }
 
+        /**
+         * Invia un messaggio all'altro dispositivo.
+         *
+         * @param json messaggio in JSON
+         */
         public void send(JSONObject json) {
             final String message = json.toString();
 
             Log.v(TAG, "Send: " + message);
             synchronized (rawSocketLock) {
                 if (out == null) {
-                    reportError("Sending data on closed socket.");
+                    onError("Sending data on closed socket.");
                     return;
                 }
                 out.write(message + "\n");
@@ -185,6 +255,9 @@ public class TCPChannelClient {
         }
     }
 
+    /**
+     * Crea una ServerSocket e attende che un dispositivo si connetta.
+     */
     private class TCPSocketServer extends TCPSocket {
         @Nullable
         private ServerSocket serverSocket;
@@ -198,11 +271,12 @@ public class TCPChannelClient {
         @Override
         public Socket connect() {
             Log.d(TAG, "Listening on " + port);
+            // Crea un ServerSocket
             final ServerSocket tempSocket;
             try {
                 tempSocket = new ServerSocket(port, 0);
             } catch (IOException e) {
-                reportError("Failed to create server socket: " + e.getMessage());
+                onError("Failed to create server socket: " + e.getMessage());
                 return null;
             }
             synchronized (rawSocketLock) {
@@ -211,12 +285,14 @@ public class TCPChannelClient {
                 }
                 serverSocket = tempSocket;
             }
+
+            // Attende un dispositivo
             try {
                 return tempSocket.accept();
             } catch (SocketException e) {
                 return null;
             } catch (IOException e) {
-                reportError("Failed to receive connection: " + e.getMessage());
+                onError("Failed to receive connection: " + e.getMessage());
                 return null;
             }
         }
@@ -224,6 +300,7 @@ public class TCPChannelClient {
         @Override
         public void disconnect() {
             try {
+                // Chiude il ServerSocket
                 synchronized (rawSocketLock) {
                     if (serverSocket != null) {
                         serverSocket.close();
@@ -231,12 +308,16 @@ public class TCPChannelClient {
                     }
                 }
             } catch (IOException e) {
-                reportError("Failed to close server socket: " + e.getMessage());
+                onError("Failed to close server socket: " + e.getMessage());
             }
             super.disconnect();
         }
     }
 
+    /**
+     * Socket client.
+     * Si connette a un socket di tipo ServerSocket (TCPSocketServer) creato da un altro dispositivo.
+     */
     private class TCPSocketClient extends TCPSocket {
         final private InetAddress address;
         final private int port;
@@ -250,10 +331,11 @@ public class TCPChannelClient {
         @Override
         public Socket connect() {
             Log.d(TAG, "Connecting to [" + address.getHostAddress() + "]:" + port);
+            // Connessione al ServerSocket dell'altro dispositivo
             try {
                 return new Socket(address, port);
             } catch (IOException e) {
-                reportError("Failed to connect: " + e.getMessage());
+                onError("Failed to connect: " + e.getMessage());
                 return null;
             }
         }
